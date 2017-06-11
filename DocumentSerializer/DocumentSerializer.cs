@@ -26,7 +26,7 @@ namespace cpGames.Serialization
                 {
                     continue;
                 }
-                
+
                 var maskAtt = field.GetCpAttribute<CpMaskAttribute>();
 
                 if (maskAtt != null && (maskAtt.Mask & mask) != mask)
@@ -157,7 +157,12 @@ namespace cpGames.Serialization
 
         private static T DeserializeDocument<T>(Document doc)
         {
-            var type = Type.GetType(doc[Common.TYPE_KEY]);
+            var typeName = doc[Common.TYPE_KEY];
+            var type = Type.GetType(typeName);
+            if (type == null)
+            {
+                throw new Exception(string.Format("Unsupported type {0}", typeName));
+            }
             var serializable = Activator.CreateInstance(type);
             var fields = Common.GetFields(serializable.GetType());
 

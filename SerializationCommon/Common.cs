@@ -9,8 +9,6 @@ namespace cpGames.Serialization
     {
         #region Fields
         public const string TYPE_KEY = "type";
-        public const string IGNORE_KEY = "ignore";
-        public const string MASK_KEY = "mask";
         #endregion
 
         #region Methods
@@ -149,35 +147,4 @@ namespace cpGames.Serialization
 
     [AttributeUsage(AttributeTargets.Field)]
     public class CpIgnoreAttribute : Attribute {}
-
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Field, Inherited = false)]
-    public class CpSerializedAttribute : Attribute
-    {
-        #region Fields
-        private readonly Dictionary<string, object> _properties;
-        #endregion
-
-        #region Properties
-        public Dictionary<string, object> Properties { get { return _properties; } }
-        #endregion
-
-        #region Constructors
-        public CpSerializedAttribute(Dictionary<string, object> properties)
-        {
-            _properties = properties;
-        }
-        #endregion
-
-        #region Methods
-        public T GetValue<T>(string key)
-        {
-            object val;
-            if (_properties.TryGetValue(key, out val))
-            {
-                return (T)val;
-            }
-            return default(T);
-        }
-        #endregion
-    }
 }
