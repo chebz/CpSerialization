@@ -41,6 +41,12 @@
     <Compile Include="Common.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Helpers\zLib\zLib.csproj">
+      <Project>{c32db84e-82b7-4ced-a37a-3b84f70c08eb}</Project>
+      <Name>zLib</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy SerializationCommon.dll %25PA_ROOT%25\Client\Assets\_ProjectA\libraries\ /Y

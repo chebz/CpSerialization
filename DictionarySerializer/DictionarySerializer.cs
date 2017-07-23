@@ -35,7 +35,7 @@ namespace cpGames.Serialization
                     continue;
                 }
 
-                var maskAtt = field.GetCpAttribute<CpMaskAttribute>();
+                var maskAtt = field.GetAttribute<CpMaskAttribute>();
 
                 if (maskAtt != null && (maskAtt.Mask & mask) != mask)
                 {

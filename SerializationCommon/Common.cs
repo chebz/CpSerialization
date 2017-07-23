@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using zLib;
 
 namespace cpGames.Serialization
 {
@@ -45,7 +46,9 @@ namespace cpGames.Serialization
 
         public static bool IsTypeOrDerived(Type baseType, Type derivedType)
         {
-            return baseType == derivedType || derivedType.IsSubclassOf(baseType);
+            return baseType == derivedType || 
+                derivedType.IsSubclassOf(baseType) || 
+                derivedType.IsAssignableFrom(baseType);
         }
 
         public static bool IsTypeOrDerived(object baseObj, object derivedObj)
@@ -90,11 +93,18 @@ namespace cpGames.Serialization
             return generic.Invoke(source, null);
         }
 
+        public static object InvokeMethod(object source, string methodName, object[] data)
+        {
+            var method = source.GetType().GetMethod(methodName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            return method.Invoke(source, data);
+        }
+
         public static IEnumerable<FieldInfo> GetFields(Type type)
         {
             var fields =
                 type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Where(x => !x.HasCpAttribute<CpIgnoreAttribute>());
+                    .Where(x => !x.HasAttribute<CpIgnoreAttribute>());
             return fields;
         }
 
@@ -114,14 +124,49 @@ namespace cpGames.Serialization
             return res;
         }
 
-        public static T GetCpAttribute<T>(this FieldInfo field)
+        public static T GetAttribute<T>(this FieldInfo field)
         {
             return (T)field.GetCustomAttributes(typeof (T), true).FirstOrDefault();
         }
 
-        public static bool HasCpAttribute<T>(this FieldInfo field)
+        public static List<T> GetAttributes<T>(this FieldInfo field)
         {
-            return field.GetCpAttribute<T>() != null;
+            return field.GetCustomAttributes(typeof (T), true).ToList<T>();
+        }
+
+        public static T GetAttribute<T>(this Type type)
+        {
+            return (T)type.GetCustomAttributes(typeof (T), true).FirstOrDefault();
+        }
+
+        public static T GetAttribute<T>(this MethodInfo method)
+        {
+            return (T)method.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+        }
+
+        public static List<T> GetAttributes<T>(this Type type)
+        {
+            return type.GetCustomAttributes(typeof (T), true).ToList<T>();
+        }
+
+        public static List<T> GetAttributes<T>(this MethodInfo method)
+        {
+            return method.GetCustomAttributes(typeof(T), true).ToList<T>();
+        }
+
+        public static bool HasAttribute<T>(this FieldInfo field)
+        {
+            return field.GetAttribute<T>() != null;
+        }
+
+        public static bool HasAttribute<T>(this Type type)
+        {
+            return type.GetAttribute<T>() != null;
+        }
+
+        public static bool HasAttribute<T>(this MethodInfo method)
+        {
+            return method.GetAttribute<T>() != null;
         }
         #endregion
     }
