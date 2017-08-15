@@ -13,7 +13,7 @@ namespace cpGames.Serialization
         #endregion
 
         #region Methods
-        public static Type GetElementType(Type type)
+        public static Type GetElementType(this Type type)
         {
             var elementType = type.GetElementType() ?? type.GetGenericArguments()[0];
             return elementType;
@@ -32,6 +32,11 @@ namespace cpGames.Serialization
                 ).ToList();
         }
 
+        public static bool IsStruct(this Type type)
+        {
+            return type.IsValueType && !type.IsPrimitive;
+        }
+
         public static List<Type> FindAllDerivedTypes<T>(Assembly assembly)
         {
             var type = typeof (T);
@@ -44,21 +49,21 @@ namespace cpGames.Serialization
                 ).ToList();
         }
 
-        public static bool IsTypeOrDerived(Type baseType, Type derivedType)
+        public static bool IsTypeOrDerived(this Type derivedType, Type baseType)
         {
-            return baseType == derivedType || 
-                derivedType.IsSubclassOf(baseType) || 
-                derivedType.IsAssignableFrom(baseType);
+            return baseType == derivedType ||
+                   derivedType.IsSubclassOf(baseType) ||
+                   derivedType.IsAssignableFrom(baseType);
         }
 
         public static bool IsTypeOrDerived(object baseObj, object derivedObj)
         {
-            return IsTypeOrDerived(baseObj.GetType(), derivedObj.GetType());
+            return derivedObj.GetType().IsTypeOrDerived(baseObj.GetType());
         }
 
         public static bool IsTypeOrDerived(Type baseType, object derivedObj)
         {
-            return IsTypeOrDerived(baseType, derivedObj.GetType());
+            return derivedObj.GetType().IsTypeOrDerived(baseType);
         }
 
         public static object InvokeGeneric<T>(string methodName, Type t, object[] data)
@@ -100,7 +105,7 @@ namespace cpGames.Serialization
             return method.Invoke(source, data);
         }
 
-        public static IEnumerable<FieldInfo> GetFields(Type type)
+        public static IEnumerable<FieldInfo> GetFields(this Type type)
         {
             var fields =
                 type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
@@ -141,7 +146,7 @@ namespace cpGames.Serialization
 
         public static T GetAttribute<T>(this MethodInfo method)
         {
-            return (T)method.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+            return (T)method.GetCustomAttributes(typeof (T), true).FirstOrDefault();
         }
 
         public static List<T> GetAttributes<T>(this Type type)
@@ -151,7 +156,7 @@ namespace cpGames.Serialization
 
         public static List<T> GetAttributes<T>(this MethodInfo method)
         {
-            return method.GetCustomAttributes(typeof(T), true).ToList<T>();
+            return method.GetCustomAttributes(typeof (T), true).ToList<T>();
         }
 
         public static bool HasAttribute<T>(this FieldInfo field)
@@ -179,7 +184,10 @@ namespace cpGames.Serialization
         #endregion
 
         #region Properties
-        public byte Mask { get { return _mask; } }
+        public byte Mask
+        {
+            get { return _mask; }
+        }
         #endregion
 
         #region Constructors
