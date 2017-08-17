@@ -9,3 +9,7 @@ Serializes your classes to Dictionary(string, object) where string is a field na
 #### Document Serializer:
 
 Serializes your classes to AWS DynamoDB Document type and back. Now you can store your classes in aws database (without using their DataModel pipeline that totally disrepects abstract or interface). Woohoo!
+
+#### Common:
+
+Contains some sweet reflection helper functions.
