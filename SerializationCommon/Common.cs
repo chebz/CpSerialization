@@ -53,7 +53,7 @@ namespace cpGames.Serialization
         {
             return baseType == derivedType ||
                    derivedType.IsSubclassOf(baseType) ||
-                   derivedType.IsAssignableFrom(baseType);
+                   baseType.IsAssignableFrom(derivedType);
         }
 
         public static bool IsTypeOrDerived(object baseObj, object derivedObj)

@@ -58,6 +58,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="ComonTests.cs" />
     <Compile Include="DictionarySerializerTests.cs" />
     <Compile Include="TestClasses.cs" />
     <Compile Include="DocumentSerializerTests.cs" />
