@@ -15,8 +15,15 @@ namespace cpGames.Serialization
         #region Methods
         public static Type GetElementType(this Type type)
         {
-            var elementType = type.GetElementType() ?? type.GetGenericArguments()[0];
-            return elementType;
+            if (type.GetElementType() != null)
+            {
+                return type.GetElementType();
+            }
+            if (type.GetGenericArguments().Length > 0)
+            {
+                return type.GetGenericArguments()[0];
+            }
+            return GetElementType(type.BaseType);
         }
 
         public static List<Type> FindAllDerivedTypes<T>()
@@ -149,14 +156,14 @@ namespace cpGames.Serialization
             return (T)method.GetCustomAttributes(typeof (T), true).FirstOrDefault();
         }
 
-        public static List<T> GetAttributes<T>(this Type type)
+        public static List<T> GetAttributes<T>(this Type type, bool inherit = true)
         {
-            return type.GetCustomAttributes(typeof (T), true).ToList<T>();
+            return type.GetCustomAttributes(typeof(T), inherit).ToList<T>();
         }
 
-        public static List<T> GetAttributes<T>(this MethodInfo method)
+        public static List<T> GetAttributes<T>(this MethodInfo method, bool inherit = true)
         {
-            return method.GetCustomAttributes(typeof (T), true).ToList<T>();
+            return method.GetCustomAttributes(typeof(T), inherit).ToList<T>();
         }
 
         public static bool HasAttribute<T>(this FieldInfo field)

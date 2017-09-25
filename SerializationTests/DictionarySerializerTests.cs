@@ -1,10 +1,12 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using System.Collections.Generic;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace cpGames.Serialization.Tests
 {
     [TestClass]
     public class DictionarySerializerTests
     {
+        #region Methods
         [TestMethod]
         public void DictionaryTest1()
         {
@@ -41,5 +43,20 @@ namespace cpGames.Serialization.Tests
             var serializedData = DictionarySerializer.Serialize(a);
             var a_deserialized = DictionarySerializer.Deserialize<TestStruct>(serializedData);
         }
+
+        [TestMethod]
+        public void ListTest()
+        {
+            //var lIn = new ListClass();
+            var lIn = new ListContainerClass { list = new List<string>() };
+            lIn.list.Add("Hello");
+            lIn.list.Add("My name is");
+            lIn.list.Add("Bob!");
+            var serializedData = DictionarySerializer.Serialize(lIn);
+            DictionarySerializer.DeserializeList<ListClass>(new object[] { serializedData });
+            //var lOut = DictionarySerializer.Deserialize<ListClass>(serializedData);
+            var lOut = DictionarySerializer.Deserialize<ListContainerClass>(serializedData);
+        }
+        #endregion
     }
 }

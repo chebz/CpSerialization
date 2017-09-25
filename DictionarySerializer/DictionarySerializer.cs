@@ -125,8 +125,7 @@ namespace cpGames.Serialization
 
             if (type.IsClass || type.IsInterface || type.IsValueType)
             {
-                return
-                    (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeObject", type, data);
+                return (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeObject", type, data);
             }
 
             throw new Exception(string.Format("Unsupported type {0}", type.Name));
@@ -164,7 +163,7 @@ namespace cpGames.Serialization
             return (T)serializable;
         }
 
-        private static T DeserializeList<T>(IList<object> data) where T : IList
+        public static T DeserializeList<T>(IList<object> data) where T : IList
         {
             var type = typeof (T);
             var listCtor = type.GetConstructor(new[] { typeof (int) });
