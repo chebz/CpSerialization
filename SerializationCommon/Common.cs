@@ -26,34 +26,36 @@ namespace cpGames.Serialization
             return GetElementType(type.BaseType);
         }
 
-        public static List<Type> FindAllDerivedTypes<T>()
-        {
-            var type = typeof (T);
-            var assembly = Assembly.GetAssembly(type);
-            var derivedType = type;
-            return assembly
-                .GetTypes()
-                .Where(t =>
-                    (t != derivedType) &&
-                    derivedType.IsAssignableFrom(t)
-                ).ToList();
-        }
-
         public static bool IsStruct(this Type type)
         {
             return type.IsValueType && !type.IsPrimitive;
         }
 
-        public static List<Type> FindAllDerivedTypes<T>(Assembly assembly)
+        public static IEnumerable<Type> FindAllDerivedTypes(this Type type, Assembly assembly)
         {
-            var type = typeof (T);
             var derivedType = type;
             return assembly
                 .GetTypes()
                 .Where(t =>
-                    (t != derivedType) &&
-                    derivedType.IsAssignableFrom(t)
-                ).ToList();
+                    t != derivedType &&
+                    derivedType.IsAssignableFrom(t));
+        }
+
+        public static IEnumerable<Type> FindAllDerivedTypes(this Type type)
+        {
+            var assembly = Assembly.GetAssembly(type);
+            return type.FindAllDerivedTypes(assembly);
+        }
+
+        public static IEnumerable<Type> FindAllDerivedTypes<T>()
+        {
+            return FindAllDerivedTypes(typeof(T));
+        }
+
+        public static IEnumerable<Type> FindAllDerivedTypes<T>(Assembly assembly)
+        {
+            var type = typeof(T);
+            return type.FindAllDerivedTypes(assembly);
         }
 
         public static bool IsTypeOrDerived(this Type derivedType, Type baseType)
@@ -75,7 +77,7 @@ namespace cpGames.Serialization
 
         public static object InvokeGeneric<T>(string methodName, Type t, object[] data)
         {
-            var method = typeof (T).GetMethod(methodName,
+            var method = typeof(T).GetMethod(methodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             var generic = method.MakeGenericMethod(t);
             return generic.Invoke(null, data);
@@ -83,7 +85,7 @@ namespace cpGames.Serialization
 
         public static object InvokeGeneric<T>(string methodName, Type t, object data)
         {
-            var method = typeof (T).GetMethod(methodName,
+            var method = typeof(T).GetMethod(methodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             var generic = method.MakeGenericMethod(t);
             return generic.Invoke(null, new[] { data });
@@ -91,7 +93,7 @@ namespace cpGames.Serialization
 
         public static object InvokeGeneric<T>(string methodName, Type t)
         {
-            var method = typeof (T).GetMethod(methodName,
+            var method = typeof(T).GetMethod(methodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
             var generic = method.MakeGenericMethod(t);
             return generic.Invoke(null, null);
@@ -99,7 +101,7 @@ namespace cpGames.Serialization
 
         public static object InvokeGeneric<T>(object source, string methodName, Type t)
         {
-            var method = typeof (T).GetMethod(methodName,
+            var method = typeof(T).GetMethod(methodName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var generic = method.MakeGenericMethod(t);
             return generic.Invoke(source, null);
@@ -116,7 +118,7 @@ namespace cpGames.Serialization
         {
             var fields =
                 type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Where(x => !x.HasAttribute<CpIgnoreAttribute>());
+                    .Where(x => !x.HasAttribute<CpSerializationIgnoreAttribute>());
             return fields;
         }
 
@@ -138,22 +140,22 @@ namespace cpGames.Serialization
 
         public static T GetAttribute<T>(this FieldInfo field)
         {
-            return (T)field.GetCustomAttributes(typeof (T), true).FirstOrDefault();
+            return (T)field.GetCustomAttributes(typeof(T), true).FirstOrDefault();
         }
 
         public static List<T> GetAttributes<T>(this FieldInfo field)
         {
-            return field.GetCustomAttributes(typeof (T), true).ToList<T>();
+            return field.GetCustomAttributes(typeof(T), true).ToList<T>();
         }
 
         public static T GetAttribute<T>(this Type type)
         {
-            return (T)type.GetCustomAttributes(typeof (T), true).FirstOrDefault();
+            return (T)type.GetCustomAttributes(typeof(T), true).FirstOrDefault();
         }
 
         public static T GetAttribute<T>(this MethodInfo method)
         {
-            return (T)method.GetCustomAttributes(typeof (T), true).FirstOrDefault();
+            return (T)method.GetCustomAttributes(typeof(T), true).FirstOrDefault();
         }
 
         public static List<T> GetAttributes<T>(this Type type, bool inherit = true)
@@ -183,28 +185,44 @@ namespace cpGames.Serialization
         #endregion
     }
 
+    [Flags]
+    public enum SerializationMaskType
+    {
+        Everything = 0,
+        Short = 1,
+        Public = 2,
+        Private = 4
+    }
+
     [AttributeUsage(AttributeTargets.Field)]
-    public class CpMaskAttribute : Attribute
+    public class SerializationMaskAttribute : Attribute
     {
         #region Fields
-        private readonly byte _mask;
+        private readonly SerializationMaskType _mask;
         #endregion
 
         #region Properties
-        public byte Mask
+        public SerializationMaskType Mask
         {
             get { return _mask; }
         }
         #endregion
 
         #region Constructors
-        public CpMaskAttribute(byte mask)
+        public SerializationMaskAttribute(SerializationMaskType mask)
         {
             _mask = mask;
+        }
+        #endregion
+
+        #region Methods
+        public bool IsMaskValid(SerializationMaskType mask)
+        {
+            return (_mask & mask) != mask;
         }
         #endregion
     }
 
     [AttributeUsage(AttributeTargets.Field)]
-    public class CpIgnoreAttribute : Attribute {}
+    public class CpSerializationIgnoreAttribute : Attribute { }
 }

@@ -32,16 +32,16 @@ namespace cpGames.Serialization.Tests
 
         public List<List<int>> listOfLists;
 
-        [CpIgnore]
+        [CpSerializationIgnore]
         public string ignoreMe;
 
-        [CpMask(1)]
+        [SerializationMask(SerializationMaskType.Public)]
         public string onlyForPrivileged;
 
-        [CpMask(2)]
+        [SerializationMask(SerializationMaskType.Private)]
         public string onlyForSuperPrivileged;
 
-        [CpMask(1 | 2)]
+        [SerializationMask(SerializationMaskType.Public | SerializationMaskType.Private)]
         public string forBoth;
         #endregion
 
@@ -197,6 +197,8 @@ namespace cpGames.Serialization.Tests
 
     public class ListContainerClass
     {
+        #region Fields
         public List<string> list;
+        #endregion
     }
 }

@@ -8,7 +8,7 @@ namespace cpGames.Serialization
     public class DocumentSerializer
     {
         #region Methods
-        public static Document Serialize(object item, byte mask = 0)
+        public static Document Serialize(object item, SerializationMaskType mask = SerializationMaskType.Everything)
         {
             var doc = new Document { { Common.TYPE_KEY, item.GetType().AssemblyQualifiedName } };
             var fields = Common.GetFields(item.GetType()).ToArray();
@@ -27,9 +27,9 @@ namespace cpGames.Serialization
                     continue;
                 }
 
-                var maskAtt = field.GetAttribute<CpMaskAttribute>();
+                var maskAtt = field.GetAttribute<SerializationMaskAttribute>();
 
-                if (maskAtt != null && (maskAtt.Mask & mask) != mask)
+                if (maskAtt != null && maskAtt.IsMaskValid(mask))
                 {
                     continue;
                 }
@@ -45,7 +45,7 @@ namespace cpGames.Serialization
             return doc;
         }
 
-        private static DynamoDBEntry SerializeField(object value, byte mask = 0)
+        private static DynamoDBEntry SerializeField(object value, SerializationMaskType mask)
         {
             if (value == null)
             {

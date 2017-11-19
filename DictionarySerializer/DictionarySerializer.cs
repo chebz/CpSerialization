@@ -8,7 +8,7 @@ namespace cpGames.Serialization
     public class DictionarySerializer
     {
         #region Methods
-        public static Dictionary<string, object> Serialize(object item, byte mask = 0)
+        public static Dictionary<string, object> Serialize(object item, SerializationMaskType mask = SerializationMaskType.Everything)
         {
             var data = new Dictionary<string, object>
             {
@@ -35,9 +35,9 @@ namespace cpGames.Serialization
                     continue;
                 }
 
-                var maskAtt = field.GetAttribute<CpMaskAttribute>();
+                var maskAtt = field.GetAttribute<SerializationMaskAttribute>();
 
-                if (maskAtt != null && (maskAtt.Mask & mask) != mask)
+                if (maskAtt != null && maskAtt.IsMaskValid(mask))
                 {
                     continue;
                 }
@@ -53,7 +53,7 @@ namespace cpGames.Serialization
             return data;
         }
 
-        private static object SerializeField(object value, byte mask = 0)
+        private static object SerializeField(object value, SerializationMaskType mask)
         {
             if (value == null)
             {
@@ -62,12 +62,12 @@ namespace cpGames.Serialization
 
             var type = value.GetType();
 
-            if (type.IsPrimitive || (type == typeof (string)))
+            if (type.IsPrimitive || type == typeof(string))
             {
                 return value;
             }
 
-            if (type.GetInterfaces().Contains(typeof (IList)))
+            if (type.GetInterfaces().Contains(typeof(IList)))
             {
                 var list = (IList)value;
                 var listData = new object[list.Count];
@@ -80,13 +80,13 @@ namespace cpGames.Serialization
                 return listData;
             }
 
-            if (type.GetInterfaces().Contains(typeof (IDictionary)))
+            if (type.GetInterfaces().Contains(typeof(IDictionary)))
             {
                 var dict = (IDictionary)value;
                 var dictData = new Dictionary<object, object>();
                 foreach (var key in dict.Keys)
                 {
-                    dictData[SerializeField(key)] = SerializeField(dict[key]);
+                    dictData[SerializeField(key, mask)] = SerializeField(dict[key], mask);
                 }
                 return dictData;
             }
@@ -106,14 +106,14 @@ namespace cpGames.Serialization
 
         public static T Deserialize<T>(object data)
         {
-            var type = typeof (T);
+            var type = typeof(T);
 
-            if (type.IsPrimitive || (type == typeof (string)))
+            if (type.IsPrimitive || type == typeof(string))
             {
                 return (T)data;
             }
 
-            if (type.GetInterfaces().Contains(typeof (IList)))
+            if (type.GetInterfaces().Contains(typeof(IList)))
             {
                 return (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeList", type, data);
             }
@@ -165,8 +165,8 @@ namespace cpGames.Serialization
 
         public static T DeserializeList<T>(IList<object> data) where T : IList
         {
-            var type = typeof (T);
-            var listCtor = type.GetConstructor(new[] { typeof (int) });
+            var type = typeof(T);
+            var listCtor = type.GetConstructor(new[] { typeof(int) });
             var list = (IList)listCtor.Invoke(new object[] { data.Count });
             var elementType = Common.GetElementType(type);
             if (list.IsFixedSize)
