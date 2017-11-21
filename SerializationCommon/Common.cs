@@ -182,6 +182,17 @@ namespace cpGames.Serialization
         {
             return method.GetAttribute<T>() != null;
         }
+
+        public static bool HasGenericArgument(this Type type, Type argType)
+        {
+            var atts = type.GetGenericArguments();
+            return atts.Any(att => att == argType) || type.BaseType != null && type.BaseType.HasGenericArgument(argType);
+        }
+
+        public static bool HasGenericArgument<T>(this Type type)
+        {
+            return type.HasGenericArgument(typeof(T));
+        }
         #endregion
     }
 
