@@ -8,7 +8,8 @@ namespace cpGames.Serialization
     public class DictionarySerializer
     {
         #region Methods
-        public static Dictionary<string, object> Serialize(object item, SerializationMaskType mask = SerializationMaskType.Everything)
+        public static Dictionary<string, object> Serialize(object item,
+            SerializationMaskType mask = SerializationMaskType.Everything)
         {
             var data = new Dictionary<string, object>
             {
@@ -125,7 +126,8 @@ namespace cpGames.Serialization
 
             if (type.IsClass || type.IsInterface || type.IsValueType)
             {
-                return (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeObject", type, data);
+                return (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeObject", type,
+                    data);
             }
 
             throw new Exception(string.Format("Unsupported type {0}", type.Name));
@@ -181,8 +183,11 @@ namespace cpGames.Serialization
             {
                 foreach (var item in data)
                 {
-                    list.Add(Common.InvokeGeneric<DictionarySerializer>("Deserialize", elementType,
-                        item));
+                    if (item == null)
+                    {
+                        continue;
+                    }
+                    list.Add(Common.InvokeGeneric<DictionarySerializer>("Deserialize", elementType, item));
                 }
             }
             return (T)list;
