@@ -138,24 +138,24 @@ namespace cpGames.Serialization
             return res;
         }
 
-        public static T GetAttribute<T>(this FieldInfo field)
+        public static T GetAttribute<T>(this FieldInfo field, bool inherit = true)
         {
-            return (T)field.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+            return (T)field.GetCustomAttributes(typeof(T), inherit).FirstOrDefault();
         }
 
-        public static List<T> GetAttributes<T>(this FieldInfo field)
+        public static List<T> GetAttributes<T>(this FieldInfo field, bool inherit = true)
         {
-            return field.GetCustomAttributes(typeof(T), true).ToList<T>();
+            return field.GetCustomAttributes(typeof(T), inherit).ToList<T>();
         }
 
-        public static T GetAttribute<T>(this Type type)
+        public static T GetAttribute<T>(this Type type, bool inherit = true)
         {
             return (T)type.GetCustomAttributes(typeof(T), true).FirstOrDefault();
         }
 
-        public static T GetAttribute<T>(this MethodInfo method)
+        public static T GetAttribute<T>(this MethodInfo method, bool inherit = true)
         {
-            return (T)method.GetCustomAttributes(typeof(T), true).FirstOrDefault();
+            return (T)method.GetCustomAttributes(typeof(T), inherit).FirstOrDefault();
         }
 
         public static List<T> GetAttributes<T>(this Type type, bool inherit = true)
