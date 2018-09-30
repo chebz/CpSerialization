@@ -26,11 +26,6 @@ namespace cpGames.Serialization
                     continue;
                 }
 
-                if (field.IsInitOnly)
-                {
-                    continue;
-                }
-
                 if (field.IsLiteral)
                 {
                     continue;
@@ -108,8 +103,15 @@ namespace cpGames.Serialization
         public static T Deserialize<T>(object data)
         {
             var type = typeof(T);
+            var dataType = data.GetType();
 
-            if (type.IsPrimitive || type == typeof(string))
+            if (type.IsEnum)
+            {
+                return (T)Enum.Parse(type, (string)data);
+            }
+
+            if (type.IsPrimitive || type == typeof(string) ||
+                dataType.IsPrimitive || dataType == typeof(string))
             {
                 return (T)data;
             }
@@ -119,9 +121,10 @@ namespace cpGames.Serialization
                 return (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeList", type, data);
             }
 
-            if (type.IsEnum)
+            if (type.GetInterfaces().Contains(typeof(IDictionary)))
             {
-                return (T)Enum.Parse(type, (string)data);
+                return (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeDictionary", type,
+                    data);
             }
 
             if (type.IsClass || type.IsInterface || type.IsValueType)
@@ -133,10 +136,11 @@ namespace cpGames.Serialization
             throw new Exception(string.Format("Unsupported type {0}", type.Name));
         }
 
-        private static T DeserializeObject<T>(IDictionary<string, object> dict)
+        private static T DeserializeObject<T>(IDictionary<string, object> data)
         {
-            var type = Type.GetType((string)dict[Common.TYPE_KEY]);
-            var serializable = Activator.CreateInstance(type);
+            var type = Type.GetType((string)data[Common.TYPE_KEY]);
+            var serializable =
+                Activator.CreateInstance(type ?? throw new InvalidOperationException());
             var fields = Common.GetFields(type).ToArray();
 
             for (byte iField = 0; iField < fields.Length; iField++)
@@ -148,14 +152,7 @@ namespace cpGames.Serialization
                     continue;
                 }
 
-                if (field.IsInitOnly)
-                {
-                    continue;
-                }
-
-                object value;
-
-                if (dict.TryGetValue(field.Name, out value))
+                if (data.TryGetValue(field.Name, out var value))
                 {
                     field.SetValue(serializable,
                         Common.InvokeGeneric<DictionarySerializer>("Deserialize", field.FieldType,
@@ -187,10 +184,31 @@ namespace cpGames.Serialization
                     {
                         continue;
                     }
-                    list.Add(Common.InvokeGeneric<DictionarySerializer>("Deserialize", elementType, item));
+                    list.Add(Common.InvokeGeneric<DictionarySerializer>("Deserialize", elementType,
+                        item));
                 }
             }
             return (T)list;
+        }
+
+        public static T DeserializeDictionary<T>(IDictionary<object, object> data)
+            where T : IDictionary
+        {
+            var type = typeof(T);
+            var arguments = type.GetGenericArguments();
+            var keyType = arguments[0];
+            var valueType = arguments[1];
+            var dict = (IDictionary)Activator.CreateInstance(type);
+
+            foreach (var kvp in data)
+            {
+                var key = Common.InvokeGeneric<DictionarySerializer>("Deserialize",
+                    keyType, kvp.Key);
+                var value = Common.InvokeGeneric<DictionarySerializer>("Deserialize",
+                    valueType, kvp.Value);
+                dict[key] = value;
+            }
+            return (T)dict;
         }
         #endregion
     }

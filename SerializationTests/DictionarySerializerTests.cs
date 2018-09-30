@@ -57,6 +57,28 @@ namespace cpGames.Serialization.Tests
             //var lOut = DictionarySerializer.Deserialize<ListClass>(serializedData);
             var lOut = DictionarySerializer.Deserialize<ListContainerClass>(serializedData);
         }
+
+        [TestMethod]
+        public void DictionaryDictionaryTest()
+        {
+            var a = new DictionaryClass();
+            a.SetValues();
+
+            var serializedData = DictionarySerializer.Serialize(a);
+            var a1 = DictionarySerializer.Deserialize<DictionaryClass>(serializedData);
+        }
+
+        [TestMethod]
+        public void ReadonlyListTest()
+        {
+            //var lIn = new ListClass();
+            var lIn = new ListContainerClassReadonly();
+            lIn.list.Add("Hello");
+            lIn.list.Add("My name is");
+            lIn.list.Add("Bob!");
+            var serializedData = DictionarySerializer.Serialize(lIn);
+            var lOut = DictionarySerializer.Deserialize<ListContainerClassReadonly>(serializedData);
+        }
         #endregion
     }
 }

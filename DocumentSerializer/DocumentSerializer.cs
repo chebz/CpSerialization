@@ -8,7 +8,8 @@ namespace cpGames.Serialization
     public class DocumentSerializer
     {
         #region Methods
-        public static Document Serialize(object item, SerializationMaskType mask = SerializationMaskType.Everything)
+        public static Document Serialize(object item,
+            SerializationMaskType mask = SerializationMaskType.Everything)
         {
             var doc = new Document { { Common.TYPE_KEY, item.GetType().AssemblyQualifiedName } };
             var fields = Common.GetFields(item.GetType()).ToArray();
@@ -18,11 +19,6 @@ namespace cpGames.Serialization
                 var field = fields.ElementAt(iField);
 
                 if (field.IsStatic)
-                {
-                    continue;
-                }
-
-                if (field.IsInitOnly)
                 {
                     continue;
                 }
@@ -59,7 +55,7 @@ namespace cpGames.Serialization
                 return ValueToPrimitive(value);
             }
 
-            if (type.GetInterfaces().Contains(typeof (IList)))
+            if (type.GetInterfaces().Contains(typeof(IList)))
             {
                 var list = (IList)value;
                 var listOfEntries = new DynamoDBList();
@@ -68,6 +64,17 @@ namespace cpGames.Serialization
                     listOfEntries.Add(SerializeField(item, mask));
                 }
                 return listOfEntries;
+            }
+
+            if (type.GetInterfaces().Contains(typeof(IDictionary)))
+            {
+                var dict = (IDictionary)value;
+                var dictData = new Document();
+                foreach (var key in dict.Keys)
+                {
+                    dictData[SerializeField(key, mask)] = SerializeField(dict[key], mask);
+                }
+                return dictData;
             }
 
             if (type.IsEnum)
@@ -85,34 +92,46 @@ namespace cpGames.Serialization
 
         private static bool IsPrimitive(Type type)
         {
-            var converter = typeof (Primitive).GetMethod("op_Implicit", new[] { type });
+            var converter = typeof(Primitive).GetMethod("op_Implicit", new[] { type });
             return converter != null;
         }
 
         private static Primitive ValueToPrimitive(object val)
         {
-            var converter = typeof (Primitive).GetMethod("op_Implicit", new[] { val.GetType() });
+            var converter = typeof(Primitive).GetMethod("op_Implicit", new[] { val.GetType() });
             return (Primitive)converter.Invoke(null, new[] { val });
         }
 
         public static T Deserialize<T>(object data)
         {
-            var type = typeof (T);
+            var type = typeof(T);
+            var dataType = data.GetType();
 
-            var primitive = data as Primitive;
-            if (primitive != null)
+            if (dataType.IsPrimitive || dataType == typeof(string))
+            {
+                return (T)data;
+            }
+
+            if (data is Primitive primitive)
             {
                 return (T)PrimitiveToValue(type, primitive);
             }
 
-            if (type.GetInterfaces().Contains(typeof (IList)))
+            if (type.GetInterfaces().Contains(typeof(IList)))
             {
                 return (T)Common.InvokeGeneric<DocumentSerializer>("DeserializeList", type, data);
             }
 
+            if (type.GetInterfaces().Contains(typeof(IDictionary)))
+            {
+                return (T)Common.InvokeGeneric<DocumentSerializer>("DeserializeDictionary", type,
+                    data);
+            }
+
             if (type.IsClass || type.IsInterface || type.IsValueType)
             {
-                return (T)Common.InvokeGeneric<DocumentSerializer>("DeserializeDocument", type, data);
+                return (T)Common.InvokeGeneric<DocumentSerializer>("DeserializeDocument", type,
+                    data);
             }
 
             throw new Exception(string.Format("Unsupported type {0}", type.Name));
@@ -120,23 +139,23 @@ namespace cpGames.Serialization
 
         public static object PrimitiveToValue(Type type, Primitive primitive)
         {
-            if (type == typeof (float))
+            if (type == typeof(float))
             {
                 return primitive.AsSingle();
             }
-            if (type == typeof (int))
+            if (type == typeof(int))
             {
                 return primitive.AsInt();
             }
-            if (type == typeof (string))
+            if (type == typeof(string))
             {
                 return primitive.AsString();
             }
-            if (type == typeof (long))
+            if (type == typeof(long))
             {
                 return primitive.AsLong();
             }
-            if (type == typeof (byte[]))
+            if (type == typeof(byte[]))
             {
                 return primitive.AsByteArray();
             }
@@ -144,13 +163,17 @@ namespace cpGames.Serialization
             {
                 return Enum.Parse(type, primitive);
             }
-            if (type == typeof (bool))
+            if (type == typeof(bool))
             {
                 return primitive.AsBoolean();
             }
-            if (type == typeof (Guid))
+            if (type == typeof(Guid))
             {
                 return primitive.AsGuid();
+            }
+            if (type == typeof(object))
+            {
+                return primitive.Value;
             }
             throw new Exception(string.Format("Unsupported type {0}", type.Name));
         }
@@ -173,15 +196,12 @@ namespace cpGames.Serialization
                     continue;
                 }
 
-                if (field.IsInitOnly)
-                {
-                    continue;
-                }
-
                 DynamoDBEntry entry;
                 if (doc.TryGetValue(field.Name, out entry))
                 {
-                    field.SetValue(serializable, Common.InvokeGeneric<DocumentSerializer>("Deserialize", field.FieldType, entry));
+                    field.SetValue(serializable,
+                        Common.InvokeGeneric<DocumentSerializer>("Deserialize", field.FieldType,
+                            entry));
                 }
             }
             return (T)serializable;
@@ -189,25 +209,47 @@ namespace cpGames.Serialization
 
         private static T DeserializeList<T>(DynamoDBList dbList) where T : IList
         {
-            var type = typeof (T);
-            var listCtor = type.GetConstructor(new[] { typeof (int) });
+            var type = typeof(T);
+            var listCtor = type.GetConstructor(new[] { typeof(int) });
             var list = (IList)listCtor.Invoke(new object[] { dbList.Entries.Count });
             var elementType = Common.GetElementType(type);
             if (list.IsFixedSize)
             {
                 for (var iEntry = 0; iEntry < dbList.Entries.Count; iEntry++)
                 {
-                    list[iEntry] = Common.InvokeGeneric<DocumentSerializer>("Deserialize", elementType, dbList.Entries[iEntry]);
+                    list[iEntry] = Common.InvokeGeneric<DocumentSerializer>("Deserialize",
+                        elementType, dbList.Entries[iEntry]);
                 }
             }
             else
             {
                 foreach (var entry in dbList.Entries)
                 {
-                    list.Add(Common.InvokeGeneric<DocumentSerializer>("Deserialize", elementType, entry));
+                    list.Add(Common.InvokeGeneric<DocumentSerializer>("Deserialize", elementType,
+                        entry));
                 }
             }
             return (T)list;
+        }
+
+        private static T DeserializeDictionary<T>(Document doc)
+            where T : IDictionary
+        {
+            var type = typeof(T);
+            var arguments = type.GetGenericArguments();
+            var keyType = arguments[0];
+            var valueType = arguments[1];
+            var dict = (IDictionary)Activator.CreateInstance(type);
+
+            foreach (var kvp in doc)
+            {
+                var key = Common.InvokeGeneric<DocumentSerializer>("Deserialize",
+                    keyType, kvp.Key);
+                var value = Common.InvokeGeneric<DocumentSerializer>("Deserialize",
+                    valueType, kvp.Value);
+                dict[key] = value;
+            }
+            return (T)dict;
         }
         #endregion
     }

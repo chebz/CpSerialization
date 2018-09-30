@@ -35,6 +35,16 @@ namespace cpGames.Serialization.Tests
             var doc = DocumentSerializer.Serialize(a);
             var a_deserialized = DocumentSerializer.Deserialize<TestStruct>(doc);
         }
+
+        [TestMethod]
+        public void ВщсгьутеDictionaryTest()
+        {
+            var a = new DictionaryClass();
+            a.SetValues();
+
+            var serializedData = DocumentSerializer.Serialize(a);
+            var a1 = DocumentSerializer.Deserialize<DictionaryClass>(serializedData);
+        }
         #endregion
     }
 }

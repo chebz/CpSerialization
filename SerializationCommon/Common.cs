@@ -61,8 +61,8 @@ namespace cpGames.Serialization
         public static bool IsTypeOrDerived(this Type derivedType, Type baseType)
         {
             return baseType == derivedType ||
-                   derivedType.IsSubclassOf(baseType) ||
-                   baseType.IsAssignableFrom(derivedType);
+                derivedType.IsSubclassOf(baseType) ||
+                baseType.IsAssignableFrom(derivedType);
         }
 
         public static bool IsTypeOrDerived(object baseObj, object derivedObj)
@@ -185,13 +185,24 @@ namespace cpGames.Serialization
 
         public static bool HasGenericArgument(this Type type, Type argType)
         {
-            var atts = type.GetGenericArguments();
-            return atts.Any(att => att == argType) || type.BaseType != null && type.BaseType.HasGenericArgument(argType);
+            var args = type.GetGenericArguments();
+            return args.Any(att => att == argType) ||
+                type.BaseType != null && type.BaseType.HasGenericArgument(argType);
         }
 
         public static bool HasGenericArgument<T>(this Type type)
         {
             return type.HasGenericArgument(typeof(T));
+        }
+
+        public static Type[] GetBaseGenericArguments(this Type type)
+        {
+            var args = type.GetGenericArguments();
+            if (args.Length > 0)
+            {
+                return args;
+            }
+            return type.BaseType?.GetBaseGenericArguments();
         }
         #endregion
     }
@@ -213,10 +224,7 @@ namespace cpGames.Serialization
         #endregion
 
         #region Properties
-        public SerializationMaskType Mask
-        {
-            get { return _mask; }
-        }
+        public SerializationMaskType Mask => _mask;
         #endregion
 
         #region Constructors

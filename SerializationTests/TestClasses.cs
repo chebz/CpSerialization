@@ -32,8 +32,7 @@ namespace cpGames.Serialization.Tests
 
         public List<List<int>> listOfLists;
 
-        [CpSerializationIgnore]
-        public string ignoreMe;
+        [CpSerializationIgnore] public string ignoreMe;
 
         [SerializationMask(SerializationMaskType.Public)]
         public string onlyForPrivileged;
@@ -129,14 +128,15 @@ namespace cpGames.Serialization.Tests
         #region Methods
         public void SetValues()
         {
-            c = "I am nested all the way, but I have a pretty short name in serialization blob that consumes space, makes me readable, and kittens happy :)";
+            c =
+                "I am nested all the way, but I have a pretty short name in serialization blob that consumes space, makes me readable, and kittens happy :)";
         }
         #endregion
     }
 
-    public abstract class AbstractClass {}
+    public abstract class AbstractClass { }
 
-    public interface Interface {}
+    public interface Interface { }
 
     public class DerivedA : AbstractClass, Interface
     {
@@ -170,13 +170,25 @@ namespace cpGames.Serialization.Tests
     {
         #region Fields
         public Dictionary<string, float> dict;
+        public Dictionary<string, object> dict2;
         #endregion
 
         #region Methods
         public void SetValues()
         {
-            dict = new Dictionary<string, float>();
-            dict.Add("test", 123);
+            dict = new Dictionary<string, float>
+            {
+                { "a", 1 },
+                { "b", 2 },
+                { "c", 3 }
+            };
+
+            dict2 = new Dictionary<string, object>
+            {
+                { "a", 1 },
+                { "b", "two" },
+                { "c", new TestStruct { a = 5.3f, b = "three" } }
+            };
         }
         #endregion
     }
@@ -190,8 +202,8 @@ namespace cpGames.Serialization.Tests
     public class ListClass : List<string>
     {
         #region Constructors
-        public ListClass() {}
-        public ListClass(int capacity) : base(capacity) {}
+        public ListClass() { }
+        public ListClass(int capacity) : base(capacity) { }
         #endregion
     }
 
@@ -199,6 +211,15 @@ namespace cpGames.Serialization.Tests
     {
         #region Fields
         public List<string> list;
+        #endregion
+    }
+
+    public class ListContainerClassReadonly
+    {
+        #region Fields
+        public readonly List<string> list = new List<string>();
+        public readonly string str = "abs";
+        public const string CONSTSTR = "ABC";
         #endregion
     }
 }
