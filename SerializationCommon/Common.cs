@@ -31,6 +31,26 @@ namespace cpGames.Serialization
             return type.IsValueType && !type.IsPrimitive;
         }
 
+        public static List<Type> FindAllRelatedTypes(this Type type, Assembly assembly)
+        {
+            var types = new List<Type>();
+            if (!type.IsAbstract)
+            {
+                types.Add(type);
+            }
+            foreach (var derivedType in assembly.GetTypes().Where(t => t != type && type.IsAssignableFrom(t)))
+            {
+                types.AddRange(derivedType.FindAllRelatedTypes(assembly));
+            }
+            return types;
+        }
+
+        public static List<Type> FindAllRelatedTypes(this Type type)
+        {
+            var assembly = Assembly.GetAssembly(type);
+            return type.FindAllRelatedTypes(assembly);
+        }
+
         public static IEnumerable<Type> FindAllDerivedTypes(this Type type, Assembly assembly)
         {
             var derivedType = type;
