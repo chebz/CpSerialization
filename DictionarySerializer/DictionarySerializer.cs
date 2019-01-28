@@ -8,6 +8,32 @@ namespace cpGames.Serialization
     public class DictionarySerializer
     {
         #region Methods
+        public static bool TrySerialize(object item,
+            SerializationMaskType mask,
+            out Dictionary<string, object> data,
+            out string errorMessage)
+        {
+            try
+            {
+                data = Serialize(item, mask);
+                errorMessage = string.Empty;
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = e.Message;
+                data = null;
+                return false;
+            }
+        }
+
+        public static bool TrySerialize(object item,
+            out Dictionary<string, object> data,
+            out string errorMessage)
+        {
+            return TrySerialize(item, SerializationMaskType.Everything, out data, out errorMessage);
+        }
+
         public static Dictionary<string, object> Serialize(object item,
             SerializationMaskType mask = SerializationMaskType.Everything)
         {
@@ -100,6 +126,22 @@ namespace cpGames.Serialization
             throw new Exception(string.Format("Unsupported type {0}", type.Name));
         }
 
+        public static bool TryDeserialize<T>(object data, out T item, out string errorMessage)
+        {
+            try
+            {
+                item = Deserialize<T>(data);
+                errorMessage = string.Empty;
+                return true;
+            }
+            catch (Exception e)
+            {
+                errorMessage = e.Message;
+                item = default(T);
+                return false;
+            }
+        }
+
         public static T Deserialize<T>(object data)
         {
             var type = typeof(T);
@@ -118,6 +160,10 @@ namespace cpGames.Serialization
 
             if (type.GetInterfaces().Contains(typeof(IList)))
             {
+                if (data is Dictionary<string, object> dataDictionary)
+                {
+                    data = dataDictionary["_items"];
+                }
                 return (T)Common.InvokeGeneric<DictionarySerializer>("DeserializeList", type, data);
             }
 
