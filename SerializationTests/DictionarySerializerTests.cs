@@ -79,6 +79,18 @@ namespace cpGames.Serialization.Tests
             var serializedData = DictionarySerializer.Serialize(lIn);
             var lOut = DictionarySerializer.Deserialize<ListContainerClassReadonly>(serializedData);
         }
+
+        [TestMethod]
+        public void InterfaceTest()
+        {
+            var interfaceList = new List<Interface>();
+            interfaceList.Add(new DerivedA { a = "a1" });
+            interfaceList.Add(new DerivedA { a = "a2" });
+            interfaceList.Add(new DerivedB { b = "b1" });
+            var serializedData = DictionarySerializer.Serialize(interfaceList);
+            var interfaceListOut = DictionarySerializer.Deserialize<List<Interface>>(serializedData);
+            Assert.AreEqual(interfaceList.Count, interfaceListOut.Count);
+        }
         #endregion
     }
 }

@@ -8,6 +8,18 @@ namespace cpGames.Serialization
     public class DictionarySerializer
     {
         #region Methods
+        public static bool TryClone<T>(T source, out T output, out string errorMessage)
+            where T : class
+        {
+            if (!TrySerialize(source, out var data, out errorMessage) ||
+                !TryDeserialize(data, out output, out errorMessage))
+            {
+                output = null;
+                return false;
+            }
+            return true;
+        }
+
         public static bool TrySerialize(object item,
             SerializationMaskType mask,
             out Dictionary<string, object> data,
